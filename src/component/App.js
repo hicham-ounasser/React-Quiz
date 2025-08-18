@@ -8,7 +8,10 @@ import Question from "./Question";
 import NextButton from "./NextButton";
 import Progress from "./Progress";
 import FinishScreen from "./FinishScreen";
+import Footer from "./Footer";
+import Timer from "./Timer";
 
+const SECS_PER_QUESTION = 30;
 const initialState = {
   question: [],
   status: "loading",
@@ -16,6 +19,7 @@ const initialState = {
   answer: null,
   points: 0,
   highscore: 0,
+  secondsRemaining: 10,
 };
 
 function reducer(state, action) {
@@ -32,7 +36,11 @@ function reducer(state, action) {
         status: "error",
       };
     case "start":
-      return { ...state, status: "active" };
+      return {
+        ...state,
+        status: "active",
+        secondsRemaining: state.question.length * SECS_PER_QUESTION,
+      };
     case "newAnswer":
       const question = state.question.at(state.index);
       return {
@@ -58,14 +66,24 @@ function reducer(state, action) {
         question: state.question,
         status: "ready",
       };
+
+    case "time":
+      return {
+        ...state,
+        secondsRemaining: state.secondsRemaining - 1,
+        status: state.secondsRemaining === 0 ? "finished" : state.status,
+      };
+
     default:
       throw new Error("Action unknown");
   }
 }
 
 export default function App() {
-  const [{ question, status, index, answer, points, highscore }, dispatch] =
-    useReducer(reducer, initialState);
+  const [
+    { question, status, index, answer, points, highscore, secondsRemaining },
+    dispatch,
+  ] = useReducer(reducer, initialState);
 
   const numQuestions = question.length;
   const maxPossiblePoints = question.reduce(
@@ -103,6 +121,9 @@ export default function App() {
               dispatch={dispatch}
               answer={answer}
             />
+            <Footer dispatch={dispatch} secondsRemaining={secondsRemaining}>
+              <Timer dispatch={dispatch} secondsRemaining={secondsRemaining} />
+            </Footer>
             <NextButton
               dispatch={dispatch}
               answer={answer}
